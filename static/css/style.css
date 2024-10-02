@@ -1,0 +1,143 @@
+*{
+    padding: 0;
+    margin: 0;
+    font-size: 1.2rem;
+    font-family: 'Times New Roman', Times, serif;
+    box-sizing: border-box;
+}
+
+html{
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    height: 100vh;
+}
+
+.header {
+    padding: 10px 20px 10px 20px;
+    background-color: #007bff;
+    color: white;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.footer {
+    padding: 5px 20px 5px 20px;
+    box-sizing: border-box;
+    text-align: center;
+    opacity: 0.3;
+    font-size: 1rem;
+}
+
+.messages-list {
+    flex: 1; 
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto; 
+}
+
+.message-form {
+    flex-shrink: 0; 
+    background-color: #dcf8c6;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 30px;
+    margin: 0  10px 0px 10px;
+}
+
+.message {
+    margin-bottom: 10px;
+    list-style: none;
+}
+
+.message-text {
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.sent {
+    background-color: #eefce3;
+    align-self: flex-end;
+}
+
+.received {
+    background-color: #cce7ff;
+    align-self: flex-start;
+}
+
+/*  */
+
+.file-name-container {
+    margin-bottom: 5px;
+    padding: 0px 20px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-group .message-input {
+    flex: 1;
+    padding: 0px 20px;
+    border-radius: 30px;
+    border: none;
+    outline: none;
+    resize: none;
+    background-color: transparent; 
+    text-align: left;
+    vertical-align: middle; 
+}
+
+.input-group .btn-upload {
+    padding: 0px 10px;
+    border: none;
+    outline: none;
+    background-color: transparent; 
+}
+
+.input-group .btn-send {
+    padding: 0px 10px;
+    border: none;
+    outline: none;
+    background-color: transparent; 
+
+}
+
+.input-group .file-input {
+    display: none;
+}
+
+.file-name.text-muted {
+    font-size: 0.875rem;
+    color: red;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.loader {
+    border: 12px solid #f3f3f3; 
+    border-top: 12px solid #3498db; 
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 2s linear infinite;
+    }
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

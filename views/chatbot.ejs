@@ -36,14 +36,14 @@
                             </div>
                         </li>
                         <% } %>
-                            <% }); %>
+            <% }); %>
         </ul>
         
         <form class="message-form expanded" method="POST" enctype="multipart/form-data">
             <ul class="file-name-container"></ul>
             <div class="input-group">
                 <textarea type="text" class="form-control message-input" id="messageInput" name="message" rows="1"
-                    placeholder="Type your message..."></textarea>
+                    placeholder="Type message..."></textarea>
                 <label class="btn-upload" for="pdfFileInput">
                     <img src="/images/file.png" alt="Attach file" width="24px" />
                     <input type="file" class="file-input" id="pdfFileInput" name="file" accept="application/pdf" />
@@ -57,7 +57,6 @@
         <footer><%- include('partials/footer') %></footer>
     </div>
 
-
     <script>
         const messagesList = document.querySelector(".messages-list");
         const messageForm = document.querySelector(".message-form");
@@ -70,6 +69,22 @@
         const maxChars = 500;
         const lineHeight = 20;
         const maxHeight = lineHeight * 5;
+
+        function autoResizeMessageInput(messageInputElement) {
+            messageInputElement.style.height = "1.2rem";
+            let newHeight = messageInputElement.scrollHeight;
+
+            const lineHeight = parseFloat(getComputedStyle(messageInputElement).lineHeight);
+            const maxHeight = lineHeight * 4;
+
+            if (newHeight > maxHeight) newHeight = maxHeight;
+            messageInputElement.style.height = newHeight + "px";
+        }
+
+        window.addEventListener('resize', function(event) {
+            event.preventDefault();
+            autoResizeMessageInput(messageInput);
+        });
 
         pdfFileInput.addEventListener("change", (event) => {
             event.preventDefault();
@@ -86,10 +101,12 @@
                 fileNameContainer.innerHTML = ``
             }
         });
+        
 
         messageInput.setAttribute('maxlength', maxChars);
         messageInput.addEventListener('input', function(event) {
             event.preventDefault();
+            autoResizeMessageInput(messageInput);
             const words = messageInput.value.trim().split(/\s+/);
             
             if (words.length > maxWords) {

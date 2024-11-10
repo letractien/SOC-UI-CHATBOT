@@ -77,6 +77,10 @@ body {
     padding: 10px;
     border-radius: 5px;
     width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .sent {
@@ -97,7 +101,8 @@ body {
 }
 
 .message-input {
-    max-height: calc(1.2em * 4); 
+    height: 1.8rem;
+    max-height: calc(1.8rem * 4); 
     overflow-y: auto; 
 }
 
@@ -135,17 +140,21 @@ body {
     padding: 0px 20px;
 }
 
-.file-container .file.text-muted {
+.file-container .file {
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     display: flex;
     max-width: 100%;
+    justify-content: center;
+    align-items: center; 
 }
 
 .file-container .file .file-name {
     font-size: 0.875rem;
     color: red;
+    white-space: normal;
+    word-break: break-word;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .loader {

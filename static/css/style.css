@@ -2,7 +2,7 @@
     padding: 0;
     margin: 0;
     font-size: 1.2rem;
-    font-family: 'Times New Roman', Times, serif;
+    font-family: "Segoe UI";
     box-sizing: border-box;
 }
 
@@ -13,16 +13,15 @@ html{
 body {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
     height: 100vh;
 }
 
 .header {
     padding: 10px 20px 10px 20px;
-    background-color: #007bff;
     color: white;
-    box-sizing: border-box;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    background-color: #007bff;
     font-size: 1.5rem;
 }
 
@@ -34,23 +33,26 @@ body {
 
 .footer {
     padding: 5px 20px 5px 20px;
-    box-sizing: border-box;
     text-align: center;
     opacity: 0.3;
     font-size: 1rem;
 }
 
+.img-custom {
+    background-color: transparent; 
+    border: none;
+    outline: none;
+}
+
 .messages-list {
     flex: 1; 
     padding: 10px;
-    box-sizing: border-box;
     overflow-y: auto; 
 }
 
 .message-form {
     flex-shrink: 0; 
     background-color: #dcf8c6;
-    box-sizing: border-box;
     padding: 10px;
     border-radius: 30px;
     margin: 0 10px 0px 10px;
@@ -59,11 +61,22 @@ body {
 .message {
     margin-bottom: 10px;
     list-style: none;
+    display: flex;
+    width: 100%;
 }
 
-.message-text {
+.avatar {
+    width: 75px;
+    height: auto; 
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+}
+
+.text {
     padding: 10px;
     border-radius: 5px;
+    width: 100%;
 }
 
 .sent {
@@ -77,11 +90,6 @@ body {
 }
 
 /*  */
-
-.file-name-container {
-    margin-bottom: 5px;
-    padding: 0px 20px;
-}
 
 .input-group {
     display: flex;
@@ -100,7 +108,6 @@ body {
     border: none;
     outline: none;
     resize: none;
-    background-color: transparent; 
     text-align: left;
     vertical-align: middle; 
 }
@@ -109,28 +116,36 @@ body {
     padding: 0px 10px;
     border: none;
     outline: none;
-    background-color: transparent; 
+    display: flex;
 }
 
 .input-group .btn-send {
     padding: 0px 10px;
     border: none;
     outline: none;
-    background-color: transparent; 
-
+    display: flex;
 }
 
 .input-group .file-input {
     display: none;
 }
 
-.file-name.text-muted {
-    font-size: 0.875rem;
-    color: red;
+.file-container {
+    margin-bottom: 5px;
+    padding: 0px 20px;
+}
+
+.file-container .file.text-muted {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
     max-width: 100%;
+}
+
+.file-container .file .file-name {
+    font-size: 0.875rem;
+    color: red;
 }
 
 .loader {
@@ -140,7 +155,7 @@ body {
     width: 24px;
     height: 24px;
     animation: spin 2s linear infinite;
-    }
+}
 
 @keyframes spin {
     0% { transform: rotate(0deg); }

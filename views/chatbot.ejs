@@ -13,9 +13,13 @@
         <header><%- include('partials/header') %></header>
         
         <ul class="messages-list">
-            <% chats.forEach(chat=> { %> <% if (chat.user==='user' ) { %>
-                    <li class="message sent">
-                        <div class="message-text">
+            <% chats.forEach(chat=> { 
+                %> <% if (chat.user==='user' ) { %>
+                    <li class="message">
+                        <div class="avatar img-custom">
+                            <img src="/images/user-avatar.png" width="30px" />
+                        </div>
+                        <div class="text sent">
                             <div class="message-sender">
                                 <b>You</b>
                             </div>
@@ -24,10 +28,15 @@
                             </div>
                         </div>
                     </li>
-                    <% } else { %>
-                        <li class="message received">
-                            <div class="message-text">
-                                <div class="message-received">
+                    <% } 
+                    
+                    else { %>
+                        <li class="message">
+                            <div class="avatar img-custom">
+                                <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                            </div>
+                            <div class="text received">
+                                <div class="message-receiver">
                                     <b>AI Chatbot</b>
                                 </div>
                                 <div class="message-content">
@@ -40,16 +49,16 @@
         </ul>
         
         <form class="message-form expanded" method="POST" enctype="multipart/form-data">
-            <ul class="file-name-container"></ul>
+            <ul class="file-container"></ul>
             <div class="input-group">
-                <textarea type="text" class="form-control message-input" id="messageInput" name="message" rows="1"
+                <textarea type="text" class="form-control message-input img-custom" id="messageInput" name="message" rows="1"
                     placeholder="Type message..."></textarea>
-                <label class="btn-upload" for="pdfFileInput">
-                    <img src="/images/file.png" alt="Attach file" width="24px" />
+                <label class="btn-upload img-custom" for="pdfFileInput">
+                    <img src="/images/file.png" width="25px" />
                     <input type="file" class="file-input" id="pdfFileInput" name="file" accept="application/pdf" />
                 </label>
-                <button type="submit" class="btn-send" id="sendMessage">
-                    <img src="/images/send.png" alt="Send" width="24px" />
+                <button type="submit" class="btn-send img-custom" id="sendMessage">
+                    <img src="/images/send.png" width="25px" />
                 </button>
             </div>
         </form>
@@ -60,11 +69,13 @@
     <script>
         const messagesList = document.querySelector(".messages-list");
         const messageForm = document.querySelector(".message-form");
-        const fileNameContainer = document.querySelector(".file-name-container");
+        const fileNameContainer = document.querySelector(".file-container");
 
         const messageInput = document.getElementById("messageInput");
         const pdfFileInput = document.getElementById("pdfFileInput");
         const sendButton = document.getElementById("sendMessage");
+        const unselectedButton = document.getElementById("unselectedFile");
+
         const maxWords = 500;
         const maxChars = 500;
         const lineHeight = 20;
@@ -89,21 +100,29 @@
         pdfFileInput.addEventListener("change", (event) => {
             event.preventDefault();
             const selectedFile = event.target.files[0];
-            const fileName = selectedFile.name
+            const fileName = selectedFile.name;
 
             if (selectedFile) {
                 fileNameContainer.innerHTML = `
-                    <li class="file-name text-muted" >
-                        <div>${fileName}</div>
+                    <li class="file text-muted" >
+                        <div class="file-name">${fileName}</div>
+                        <button type="submit" class="btn-unselected-file img-custom" id="unselectedFile">
+                            <img src="/images/unselected.png" width="25px"/>
+                        </button>
                     </li>
-                `
+                `;
             } else {
-                fileNameContainer.innerHTML = ``
+                fileNameContainer.innerHTML = ``;
             }
         });
-        
 
+        unselectedButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            fileNameContainer.innerHTML = ``;
+        });
+        
         messageInput.setAttribute('maxlength', maxChars);
+        
         messageInput.addEventListener('input', function(event) {
             event.preventDefault();
             autoResizeMessageInput(messageInput);
@@ -130,14 +149,17 @@
             if (user_message.length === 0 && !selectedFile) return;
 
             const messageItem_send = document.createElement("li");
-            messageItem_send.classList.add("message", "sent");
+            messageItem_send.classList.add("message");
             messageItem_send.innerHTML = `
-                <div class="message-text">
+                <div class="avatar img-custom">
+                    <img src="/images/user-avatar.png" width="30px" />
+                </div>
+                <div class="text sent">
                     <div class="message-sender">
                         <b>You</b>
                     </div>
                     <div class="message-content">
-                        ${user_message}
+                        ${user_message}s
                     </div>
                 </div>
             `;
@@ -145,10 +167,13 @@
             messagesList.appendChild(messageItem_send);
 
             const messageItem_received = document.createElement("li");
-            messageItem_received.classList.add("message", "received");
+            messageItem_received.classList.add("message");
             messageItem_received.innerHTML = `
-                <div class="message-text">
-                    <div class="message-received">
+                <div class="avatar img-custom">
+                    <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                </div>
+                <div class="text received">
+                    <div class="message-receiver">
                         <b>AI Chatbot</b>
                     </div>
                     <div class="message-content">
@@ -170,10 +195,13 @@
             .then((data) => {
                 const chatbot_message = data.message;
                 const messageItem_received = document.createElement("li");
-                messageItem_received.classList.add("message", "received");
+                messageItem_received.classList.add("message");
                 messageItem_received.innerHTML = `
-                    <div class="message-text">
-                        <div class="message-received">
+                    <div class="avatar img-custom">
+                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                    </div>
+                    <div class="text received">
+                        <div class="message-receiver">
                             <b>AI Chatbot</b>
                         </div>
                         <div class="message-content">
@@ -191,11 +219,14 @@
             })
             .catch((error) => {
                 const errorMessageItem = document.createElement("li");
-                errorMessageItem.classList.add("message", "received");
+                errorMessageItem.classList.add("message");
                 errorMessageItem.innerHTML = `
-                    <div class="message-text">
-                        <div class="message-received">
-                            <b>Error</b>
+                    <div class="avatar img-custom">
+                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                    </div>
+                    <div class="text received">
+                        <div class="message-receiver">
+                            <b>AI Chatbot</b>
                         </div>
                         <div class="message-content">
                             An error occurred while sending your message. Please try again.

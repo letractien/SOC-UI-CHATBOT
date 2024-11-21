@@ -96,6 +96,77 @@
             }
         }
 
+        function parseInput(input) {
+            const lines = input.trim().split('\n');
+            const result = {};
+            const stack = [];
+            let current = result;
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                const headingMatch = trimmed.match(/^(#+)(.+?): (.+)$/);
+                if (headingMatch) {
+                    const level = headingMatch[1].length;
+                    const key = headingMatch[2].trim().toLowerCase().replace(/\s+/g, '');
+                    const content = headingMatch[3].trim();
+
+                    while (stack.length >= level) stack.pop();
+
+                    const parent = stack.length ? stack[stack.length - 1] : result;
+                    parent[key] = parent[key] || { content: content };
+                    stack.push(parent[key]);
+                    continue;
+                }
+
+                const listMatch = trimmed.match(/^\*\*(.+?)\*\*: (.+)$/);
+                if (listMatch) {
+                    const key = listMatch[1].trim().toLowerCase();
+                    const values = listMatch[2].trim().split(',').map(item => item.trim());
+                    result[key] = values;
+                }
+            }
+
+            return result;
+        }
+
+        function generateHTML(data) {
+            let html = "";
+
+            function traverse(node, level = 1) {
+                if (node.content) {
+                    // html += `<h${level}>${node.content}</h${level}>\n`;
+                    html += `<div class="level${level}">${node.content}</div>\n`;
+                }
+                for (const key in node) {
+                    if (key !== "content" && typeof node[key] === "object") {
+                        traverse(node[key], level + 1);
+                    }
+                }
+            }
+
+            for (const key in data) {
+                if (["images", "tables", "pages", "sources"].includes(key)) {
+                    if (key === "images" || key === "tables") {
+                        data[key].forEach(url => {
+                            html += `<img src="${url}" alt="Image" width="858px" height="348px"/></br>\n`;
+                        });
+                    } 
+                    else if (key === "pages") {
+                        html += `<p>${key.charAt(0).toUpperCase() + key.slice(1)}: ${data[key].join(", ")}</p>\n`;
+                    }
+                    else if (key === "sources") {
+                        data[key].forEach(url => {
+                            html += `<a href="${url}" target="_blank">Tham khảo: ${url}</a>\n`;
+                        });
+                    }
+                } else {
+                    traverse(data[key]);
+                }
+            }
+
+            return html;
+        }
 
         document.addEventListener("DOMContentLoaded", function() {
             const messagesList = document.querySelector(".messages-list");
@@ -162,25 +233,41 @@
 
                     const user_message = messageInput.value.trim();
                     const selectedFile = pdfFileInput.files[0];
-                    const fileName = selectedFile ? selectedFile.name : undefined;
+                    const fileName = selectedFile ? selectedFile.name : "";
                     if (user_message.length === 0 && !selectedFile) return;
 
                     const messageItem_send = document.createElement("li");
                     messageItem_send.classList.add("message");
-                    messageItem_send.innerHTML = `
-                        <div class="avatar img-custom">
-                            <img src="/images/user-avatar.png" width="30px" />
-                        </div>
-                        <div class="text sent">
-                            <div class="message-sender">
-                                <b>You</b>
+                    if (fileName !== ""){
+                        messageItem_send.innerHTML = `
+                            <div class="avatar img-custom">
+                                <img src="/images/user-avatar.png" width="30px" />
                             </div>
-                            <div class="message-content">
-                                ${user_message}
+                            <div class="text sent">
+                                <div class="message-sender">
+                                    <b>You</b>
+                                </div>
+                                <div class="message-content">
+                                    ${fileName} </br>
+                                    ${user_message}
+                                </div>
                             </div>
-                        </div>
-                    `;
-
+                        `;
+                    } else {
+                        messageItem_send.innerHTML = `
+                            <div class="avatar img-custom">
+                                <img src="/images/user-avatar.png" width="30px" />
+                            </div>
+                            <div class="text sent">
+                                <div class="message-sender">
+                                    <b>You</b>
+                                </div>
+                                <div class="message-content">
+                                    ${user_message}
+                                </div>
+                            </div>
+                        `;
+                    }
                     messagesList.appendChild(messageItem_send);
 
                     const messageItem_received = document.createElement("li");
@@ -198,41 +285,77 @@
                             </div>
                         </div>
                     `;
-
                     messagesList.appendChild(messageItem_received);
 
                     messagesList.scrollTop = messagesList.scrollHeight;
                     sendButton.disabled = true;
 
-                    fetch("/", {
-                        method: "POST",
-                        body: new FormData(messageForm),
+                    fetch('/', {
+                        method: 'POST',
+                        body: new FormData(messageForm)
                     })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        const chatbot_message = data.message;
-                        const messageItem_received = document.createElement("li");
-                        messageItem_received.classList.add("message");
-                        messageItem_received.innerHTML = `
-                            <div class="avatar img-custom">
-                                <img src="/images/aichatbot-avatar-2.png" width="30px" />
-                            </div>
-                            <div class="text received">
-                                <div class="message-receiver">
-                                    <b>AI Chatbot</b>
-                                </div>
-                                <div class="message-content">
-                                    ${chatbot_message}
-                                </div>
-                            </div>
-                        `;
-                        if (messagesList.lastChild) {
-                            messagesList.removeChild(messagesList.lastChild);
-                        }
-                        messagesList.appendChild(messageItem_received);
-                        messagesList.scrollTop = messagesList.scrollHeight;
-                        sendButton.disabled = false;
+                    .then((response) => {
+                        let chatbot_message = "";
+                        const eventSource = new EventSource("/onMessage");
 
+                        eventSource.onmessage = function(event) {
+                            if (event.data === '[DONE]') {
+
+                                eventSource.close();
+                                sendButton.disabled = false;
+                                console.log(chatbot_message);
+
+                                const parsedOutput = parseInput(chatbot_message);
+                                const htmlOutput = generateHTML(parsedOutput);
+
+                                const messageItem_received = document.createElement("li");
+                                messageItem_received.classList.add("message");
+                                messageItem_received.innerHTML = `
+                                    <div class="avatar img-custom">
+                                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                                    </div>
+                                    <div class="text received">
+                                        <div class="message-receiver">
+                                            <b>AI Chatbot</b>
+                                        </div>
+                                        <div class="message-content">
+                                            ${htmlOutput}
+                                        </div>
+                                    </div>
+                                `;
+                                if (messagesList.lastChild) {
+                                    messagesList.removeChild(messagesList.lastChild);
+                                }
+                                messagesList.appendChild(messageItem_received);
+                                messagesList.scrollTop = messagesList.scrollHeight;
+                                console.log(htmlOutput);
+
+                            } else {
+                                const chunk = JSON.parse(event.data);
+                                chatbot_message += chunk.message
+
+                                const messageItem_received = document.createElement("li");
+                                messageItem_received.classList.add("message");
+                                messageItem_received.innerHTML = `
+                                    <div class="avatar img-custom">
+                                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                                    </div>
+                                    <div class="text received">
+                                        <div class="message-receiver">
+                                            <b>AI Chatbot</b>
+                                        </div>
+                                        <div class="message-content">
+                                            ${chatbot_message}
+                                        </div>
+                                    </div>
+                                `;
+                                if (messagesList.lastChild) {
+                                    messagesList.removeChild(messagesList.lastChild);
+                                }
+                                messagesList.appendChild(messageItem_received);
+                                messagesList.scrollTop = messagesList.scrollHeight;
+                            }
+                        };
                     })
                     .catch((error) => {
                         const errorMessageItem = document.createElement("li");

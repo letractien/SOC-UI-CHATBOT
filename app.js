@@ -5,8 +5,8 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
 
-const session = require('./middlewares/session');
-const generateCookie = require('./middlewares/generateCookie');
+const {session} = require('./middlewares/session');
+const {generateCookie} = require('./middlewares/generateCookie');
 
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');

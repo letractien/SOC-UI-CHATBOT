@@ -1,41 +1,20 @@
 require('dotenv').config();
 
-const { getMessages, saveMessages } = require('../database/connectMongoDB');
-const { uploadFileSOC, uploadFileCommon, askChatbot } = require('../services/chatbotService');
+const { getMessages, saveChatMessages} = require('../database/connectMongoDB');
+const { uploadFile, askChatbot } = require('../services/chatbotService');
+const { generateHTML } = require('../tools/generateTool');
 const cookieName = process.env.COOKIE_NAME || 'authentication';
 let temporaryData = new Map();
-
-const defaultChats = [
-    { user: 'chatbot', message: 'Chào bạn, tôi có thể giúp gì cho bạn?' },
-];
-
-const saveChatMessages = async (cookie, user_message, chatbot_message, filename) => {
-    try {
-        const oldMessage = await getMessages(cookie);
-        let chats = oldMessage.length > 0 ? oldMessage : defaultChats.slice();
-
-        if (user_message === "<<<<Hi>>>>"){
-            user_message = filename;
-        } else if (filename !== ""){
-            user_message = filename + "</br>" + user_message;
-        } else {
-            user_message = user_message;
-        }
-
-        chats.push({ user: 'user', message: user_message });
-        chats.push({ user: 'chatbot', message: chatbot_message });
-
-        await saveMessages(cookie, chats);
-    } catch (error) {
-        console.error('Error saving chat messages:', error);
-    }
-};
 
 exports.getChat = async (req, res) => {
     try {
         const cookie = req.cookies[cookieName];
-        const oldMessage = await getMessages(cookie);
-        let chats = oldMessage.length > 0 ? oldMessage : defaultChats.slice();
+        let chats = await getMessages(cookie);
+        chats.forEach((chat) => {
+            if (chat.user !== 'user') {
+                chat.message = generateHTML(chat.message);
+            }
+        });
         res.render('chatbot', { chats });
     } catch (error) {
         console.error(error);
@@ -50,8 +29,7 @@ exports.postChat = async (req, res) => {
 
     if (req.file) {
         try {
-            // const upload_success = await uploadFileSOC(cookie, filename);
-            const upload_success = await uploadFileCommon(cookie, filename);
+            const upload_success = await uploadFile(cookie, filename);
 
             if (!upload_success) {
                 return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');

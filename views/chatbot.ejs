@@ -40,7 +40,7 @@
                                     <b>AI Chatbot</b>
                                 </div>
                                 <div class="message-content">
-                                    <%= chat.message %>
+                                    <%- chat.message %>
                                 </div>
                             </div>
                         </li>
@@ -130,12 +130,12 @@
             return result;
         }
 
-        function generateHTML(data) {
+        function generateHTML(content) {
+            let data = parseInput(content);
             let html = "";
 
             function traverse(node, level = 1) {
                 if (node.content) {
-                    // html += `<h${level}>${node.content}</h${level}>\n`;
                     html += `<div class="level${level}">${node.content}</div>\n`;
                 }
                 for (const key in node) {
@@ -300,15 +300,16 @@
 
                         eventSource.onmessage = function(event) {
                             if (event.data === '[DONE]') {
-
                                 eventSource.close();
                                 sendButton.disabled = false;
                                 console.log(chatbot_message);
+                            } else {
+                                const chunk = JSON.parse(event.data);
+                                chatbot_message += chunk.message
 
-                                const parsedOutput = parseInput(chatbot_message);
-                                const htmlOutput = generateHTML(parsedOutput);
-
+                                const htmlOutput = generateHTML(chatbot_message);
                                 const messageItem_received = document.createElement("li");
+
                                 messageItem_received.classList.add("message");
                                 messageItem_received.innerHTML = `
                                     <div class="avatar img-custom">
@@ -320,32 +321,6 @@
                                         </div>
                                         <div class="message-content">
                                             ${htmlOutput}
-                                        </div>
-                                    </div>
-                                `;
-                                if (messagesList.lastChild) {
-                                    messagesList.removeChild(messagesList.lastChild);
-                                }
-                                messagesList.appendChild(messageItem_received);
-                                messagesList.scrollTop = messagesList.scrollHeight;
-                                console.log(htmlOutput);
-
-                            } else {
-                                const chunk = JSON.parse(event.data);
-                                chatbot_message += chunk.message
-
-                                const messageItem_received = document.createElement("li");
-                                messageItem_received.classList.add("message");
-                                messageItem_received.innerHTML = `
-                                    <div class="avatar img-custom">
-                                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
-                                    </div>
-                                    <div class="text received">
-                                        <div class="message-receiver">
-                                            <b>AI Chatbot</b>
-                                        </div>
-                                        <div class="message-content">
-                                            ${chatbot_message}
                                         </div>
                                     </div>
                                 `;

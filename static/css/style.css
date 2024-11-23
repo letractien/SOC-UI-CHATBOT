@@ -175,19 +175,19 @@ body {
 
 .level1 {
     font-size: 1.2rem;
-    font-weight: bold;
+    font-weight: normal;
     margin-bottom: 10px;
 }
 
 .level2 {
-    font-size: 1.0rem;
+    font-size: 1.2rem;
     font-weight: normal;
     margin-bottom: 8px;
     padding-left: 50px;
 }
 
 .level3 {
-    font-size: 0.8rem;
+    font-size: 1.2rem;
     font-weight: italic;
     margin-bottom: 5px;
     padding-left: 100px;

@@ -5,17 +5,15 @@ const axios = require('axios');
 
 const storePath = process.env.STORE_PATH || './uploads/';
 const llmsAPIAsk = process.env.LLMS_API_ASK;
+const llmsAPIUpload = process.env.LLMS_API_UPLOAD;
 
-const llmsAPIUploadSOC = process.env.LLMS_API_UPLOAD_SOC;
-const llmsAPIUploadCommon = process.env.LLMS_API_UPLOAD_COMMON;
-
-exports.uploadFileSOC = async (user_id, fileName) => {
+async function uploadFile(user_id, fileName) {
     const file = fs.createReadStream(storePath + fileName);
     
     try {
         const response = await axios({
             method: 'post',
-            url: llmsAPIUploadSOC,
+            url: llmsAPIUpload,
             data: {
                 user_id: user_id,
                 file: file,
@@ -33,31 +31,7 @@ exports.uploadFileSOC = async (user_id, fileName) => {
     }
 };
 
-exports.uploadFileCommon = async (user_id, fileName) => {
-    const file = fs.createReadStream(storePath + fileName);
-    
-    try {
-        const response = await axios({
-            method: 'post',
-            url: llmsAPIUploadCommon,
-            data: {
-                user_id: user_id,
-                file: file,
-            },
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-            timeout: 180000,
-        });
-
-        return response.data;
-    } catch (error) {
-        console.error('Error during file upload:', error);
-        throw new Error('File upload failed');
-    }
-};
-
-exports.askChatbot = async (user_id, user_query, onChunkReceived) => {
+async function askChatbot(user_id, user_query, onChunkReceived) {
     try {
         const response = await axios({
             method: 'post',
@@ -95,3 +69,5 @@ exports.askChatbot = async (user_id, user_query, onChunkReceived) => {
         throw new Error('Chatbot request failed');
     }
 };
+
+module.exports = {uploadFile, askChatbot};

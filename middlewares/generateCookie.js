@@ -20,4 +20,4 @@ function generateCookie(req, res, next) {
     next();
 }
 
-module.exports = generateCookie;
+module.exports = {generateCookie};

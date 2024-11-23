@@ -18,4 +18,4 @@ const session = cookieSession({
     httpOnly: true,
 });
 
-module.exports = session;
+module.exports = {session};

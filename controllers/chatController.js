@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { getMessages, saveMessages } = require('../database/connectMongoDB');
-const { uploadFileSOC, uploadFileCommon, askChatbot } = require('../functions/chatbotService');
+const { uploadFileSOC, uploadFileCommon, askChatbot } = require('../services/chatbotService');
 const cookieName = process.env.COOKIE_NAME || 'authentication';
 let temporaryData = new Map();
 

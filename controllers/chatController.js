@@ -1,8 +1,8 @@
 require('dotenv').config();
 
-const { getMessages, saveChatMessages} = require('../database/connectMongoDB');
+const {getMessages, addNewChatBotMessages, addNewUserMessages} = require('../database/connectMongoDB');
 const { uploadFile, askChatbot } = require('../services/chatbotService');
-const { generateHTML } = require('../tools/generateTool');
+const { generateHTML } = require('../tools/generateHTMLTool');
 const cookieName = process.env.COOKIE_NAME || 'authentication';
 let temporaryData = new Map();
 
@@ -26,27 +26,36 @@ exports.postChat = async (req, res) => {
     const cookie = req.cookies[cookieName];
     var user_message = req.body.message || "<<<<Hi>>>>";
     var filename = req.file ? req.file.originalname : "";
+    await addNewUserMessages(cookie, user_message, filename);
+
+    let success = false;
+    let fileNameOut = undefined;
+    let filePathOut = undefined;
 
     if (req.file) {
         try {
-            const upload_success = await uploadFile(cookie, filename);
-
-            if (!upload_success) {
+            const response = await uploadFile(cookie, filename);
+            success = response.success;
+            fileNameOut = response.fileName ? response.fileName : "";
+            filePathOut = response.filePath ? response.filePath : "";
+            if (!response.success) {
                 return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
+            }
+            if (success){
+                await addNewChatBotMessages(cookie, 'Đây là kết quả đánh giá file SOC report của bạn', fileNameOut, filePathOut);
             }
         } catch (error) {
             return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
         }
     }
 
-    temporaryData.set(cookie, [user_message, filename]);
-    res.status(200).send({ status: 'Message received' });
+    temporaryData.set(cookie, user_message);
+    res.json({ success, 'fileName': fileNameOut, 'filePath': filePathOut });
 };
 
 exports.onMessage = async (req, res) => {
     const cookie = req.cookies[cookieName];
-    let user_message = temporaryData.get(cookie)[0];
-    let filename = temporaryData.get(cookie)[1];
+    let user_message = temporaryData.get(cookie);
     let chatbot_message = "";
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -61,7 +70,7 @@ exports.onMessage = async (req, res) => {
                 res.write('data: [DONE]\n\n');
                 res.end();
                 
-                await saveChatMessages(cookie, user_message, chatbot_message, filename);
+                await addNewChatBotMessages(cookie, chatbot_message, "", "");
                 return;
             }
 

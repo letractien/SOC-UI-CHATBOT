@@ -24,7 +24,7 @@
                                 <b>You</b>
                             </div>
                             <div class="message-content">
-                                <%= chat.message %>
+                                <%- chat.message %>
                             </div>
                         </div>
                     </li>
@@ -227,52 +227,62 @@
                         alert(`You have reached the maximum char limit of ${maxChars}.`)
                     }
                 });
-                
-                messageForm.addEventListener("submit", (event) => {
-                    event.preventDefault();
 
-                    const user_message = messageInput.value.trim();
+                messageForm.addEventListener("submit", handleFormSubmit);
+
+                // Hàm xử lý khi submit form
+                function handleFormSubmit(event) {
+                    event.preventDefault();
+                    const userMessage = messageInput.value.trim();
                     const selectedFile = pdfFileInput.files[0];
                     const fileName = selectedFile ? selectedFile.name : "";
-                    if (user_message.length === 0 && !selectedFile) return;
 
-                    const messageItem_send = document.createElement("li");
-                    messageItem_send.classList.add("message");
-                    if (fileName !== ""){
-                        messageItem_send.innerHTML = `
-                            <div class="avatar img-custom">
-                                <img src="/images/user-avatar.png" width="30px" />
-                            </div>
-                            <div class="text sent">
-                                <div class="message-sender">
-                                    <b>You</b>
-                                </div>
-                                <div class="message-content">
-                                    ${fileName} </br>
-                                    ${user_message}
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        messageItem_send.innerHTML = `
-                            <div class="avatar img-custom">
-                                <img src="/images/user-avatar.png" width="30px" />
-                            </div>
-                            <div class="text sent">
-                                <div class="message-sender">
-                                    <b>You</b>
-                                </div>
-                                <div class="message-content">
-                                    ${user_message}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    messagesList.appendChild(messageItem_send);
+                    if (userMessage.length === 0) return;
 
-                    const messageItem_received = document.createElement("li");
-                    messageItem_received.classList.add("message");
-                    messageItem_received.innerHTML = `
+                    addUserMessage(userMessage, fileName);
+                    addLoaderMessage();
+
+                    messagesList.scrollTop = messagesList.scrollHeight;
+                    sendButton.disabled = true;
+
+                    sendMessageToServer()
+                        .then(handleServerResponse)
+                        .then(handleRealTimeUpdates)
+                        .catch(handleError);
+
+                    resetForm();
+                }
+
+                // Hàm thêm tin nhắn của người dùng
+                function addUserMessage(userMessage, fileName) {
+                    const messageItem = document.createElement("li");
+                    messageItem.classList.add("message");
+
+                    const content = fileName
+                        ? `${fileName} </br> ${userMessage}`
+                        : userMessage;
+
+                    messageItem.innerHTML = `
+                        <div class="avatar img-custom">
+                            <img src="/images/user-avatar.png" width="30px" />
+                        </div>
+                        <div class="text sent">
+                            <div class="message-sender">
+                                <b>You</b>
+                            </div>
+                            <div class="message-content">
+                                ${content}
+                            </div>
+                        </div>
+                    `;
+                    messagesList.appendChild(messageItem);
+                }
+
+                // Hàm thêm loader của AI Chatbot
+                function addLoaderMessage() {
+                    const loaderMessage = document.createElement("li");
+                    loaderMessage.classList.add("message");
+                    loaderMessage.innerHTML = `
                         <div class="avatar img-custom">
                             <img src="/images/aichatbot-avatar-2.png" width="30px" />
                         </div>
@@ -285,83 +295,133 @@
                             </div>
                         </div>
                     `;
-                    messagesList.appendChild(messageItem_received);
+                    messagesList.appendChild(loaderMessage);
+                }
 
-                    messagesList.scrollTop = messagesList.scrollHeight;
-                    sendButton.disabled = true;
+                // Hàm gửi dữ liệu đến server
+                function sendMessageToServer() {
+                    const formData = new FormData(messageForm);
 
-                    fetch('/', {
+                    return fetch('/', {
                         method: 'POST',
-                        body: new FormData(messageForm)
-                    })
-                    .then((response) => {
-                        let chatbot_message = "";
-                        const eventSource = new EventSource("/onMessage");
-
-                        eventSource.onmessage = function(event) {
-                            if (event.data === '[DONE]') {
-                                eventSource.close();
-                                sendButton.disabled = false;
-                                console.log(chatbot_message);
-                            } else {
-                                const chunk = JSON.parse(event.data);
-                                chatbot_message += chunk.message
-
-                                const htmlOutput = generateHTML(chatbot_message);
-                                const messageItem_received = document.createElement("li");
-
-                                messageItem_received.classList.add("message");
-                                messageItem_received.innerHTML = `
-                                    <div class="avatar img-custom">
-                                        <img src="/images/aichatbot-avatar-2.png" width="30px" />
-                                    </div>
-                                    <div class="text received">
-                                        <div class="message-receiver">
-                                            <b>AI Chatbot</b>
-                                        </div>
-                                        <div class="message-content">
-                                            ${htmlOutput}
-                                        </div>
-                                    </div>
-                                `;
-                                if (messagesList.lastChild) {
-                                    messagesList.removeChild(messagesList.lastChild);
-                                }
-                                messagesList.appendChild(messageItem_received);
-                                messagesList.scrollTop = messagesList.scrollHeight;
-                            }
-                        };
-                    })
-                    .catch((error) => {
-                        const errorMessageItem = document.createElement("li");
-                        errorMessageItem.classList.add("message");
-                        errorMessageItem.innerHTML = `
-                            <div class="avatar img-custom">
-                                <img src="/images/aichatbot-avatar-2.png" width="30px" />
-                            </div>
-                            <div class="text received">
-                                <div class="message-receiver">
-                                    <b>AI Chatbot</b>
-                                </div>
-                                <div class="message-content">
-                                    An error occurred while sending your message. Please try again.
-                                </div>
-                            </div>
-                        `;
-
-                        if (messagesList.lastChild) {
-                            messagesList.removeChild(messagesList.lastChild);
+                        body: formData
+                    }).then((response) => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
                         }
-                        messagesList.appendChild(errorMessageItem);
-                        messagesList.scrollTop = messagesList.scrollHeight;
-                        sendButton.disabled = false;
+                        return response.json();
                     });
+                }
 
+                // Hàm xử lý phản hồi từ server
+                function handleServerResponse(data) {
+                    if(!data.success){
+                        return;
+                    }
+                    
+                    removeLastMessage();
+
+                    const resultMessage = document.createElement("li");
+                    resultMessage.classList.add("message");
+                    resultMessage.innerHTML = `
+                        <div class="avatar img-custom">
+                            <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                        </div>
+                        <div class="text received">
+                            <div class="message-receiver">
+                                <b>AI Chatbot</b>
+                            </div>
+                            <div class="message-content">
+                                Đây là kết quả đánh giá file SOC report của bạn</br>
+                                ${data.fileName}</br>
+                                ${data.filePath}</br>
+                            </div>
+                        </div>
+                    `;
+                    messagesList.appendChild(resultMessage);
+
+                    addLoaderMessage();
+                }
+
+                // Hàm xử lý cập nhật thời gian thực
+                function handleRealTimeUpdates() {                    
+                    let chatbotMessage = "";
+                    const eventSource = new EventSource("/onMessage");
+
+                    eventSource.onmessage = function(event) {
+                        if (event.data === '[DONE]') {
+                            eventSource.close();
+                            sendButton.disabled = false;
+                            console.log(chatbotMessage);
+                        } else {
+                            const chunk = JSON.parse(event.data);
+                            chatbotMessage += chunk.message;
+
+                            const htmlOutput = generateHTML(chatbotMessage);
+                            removeLastMessage();
+
+                            const realTimeMessage = document.createElement("li");
+                            realTimeMessage.classList.add("message");
+                            realTimeMessage.innerHTML = `
+                                <div class="avatar img-custom">
+                                    <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                                </div>
+                                <div class="text received">
+                                    <div class="message-receiver">
+                                        <b>AI Chatbot</b>
+                                    </div>
+                                    <div class="message-content">
+                                        ${htmlOutput}
+                                    </div>
+                                </div>
+                            `;
+
+                            messagesList.appendChild(realTimeMessage);
+                            messagesList.scrollTop = messagesList.scrollHeight;
+                        }
+                    };
+                }
+
+                // Hàm xử lý lỗi
+                function handleError(error) {
+                    console.error(error);
+
+                    const errorMessage = document.createElement("li");
+                    errorMessage.classList.add("message");
+                    errorMessage.innerHTML = `
+                        <div class="avatar img-custom">
+                            <img src="/images/aichatbot-avatar-2.png" width="30px" />
+                        </div>
+                        <div class="text received">
+                            <div class="message-receiver">
+                                <b>AI Chatbot</b>
+                            </div>
+                            <div class="message-content">
+                                Đã xảy ra lỗi khi gửi tin nhắn của bạn. Vui lòng thử lại.
+                            </div>
+                        </div>
+                    `;
+
+                    removeLastMessage();
+                    messagesList.appendChild(errorMessage);
+                    messagesList.scrollTop = messagesList.scrollHeight;
+                    sendButton.disabled = false;
+                }
+
+                // Hàm xóa tin nhắn cuối cùng
+                function removeLastMessage() {
+                    if (messagesList.lastChild) {
+                        messagesList.removeChild(messagesList.lastChild);
+                    }
+                }
+
+                // Hàm đặt lại biểu mẫu
+                function resetForm() {
                     messageForm.reset();
                     messageInput.style.height = "1.8rem";
                     fileNameContainer.innerHTML = "";
                     messageInput.focus();
-                });
+                }
 
                 messageInput.focus();
                 messagesList.scrollTop = messagesList.scrollHeight;

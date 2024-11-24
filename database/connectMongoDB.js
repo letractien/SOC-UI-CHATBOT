@@ -44,26 +44,50 @@ async function getMessages(cookie) {
     }
 }
 
-async function saveChatMessages(cookie, user_message, chatbot_message, filename){
+async function addNewUserMessages(cookie, user_message, filename){
     try {
         const oldMessage = await getMessages(cookie);
         let chats = oldMessage.length > 0 ? oldMessage : JSON.parse(JSON.stringify(defaultChats));
 
-        if (user_message === "<<<<Hi>>>>"){
-            user_message = filename;
-        } else if (filename !== ""){
+        if (user_message === "<<<<Hi>>>>" && filename === ""){
+            return;
+        } else if (user_message !== "<<<<Hi>>>>" && filename !== ""){
             user_message = filename + "</br>" + user_message;
-        } else {
+        } else if (user_message !== "<<<<Hi>>>>"){
             user_message = user_message;
+        } else if (filename !== ""){
+            user_message = filename;
         }
 
         chats.push({ user: 'user', message: user_message });
-        chats.push({ user: 'chatbot', message: chatbot_message });
-
         await saveMessages(cookie, chats);
+
     } catch (error) {
         console.error('Error saving chat messages:', error);
     }
 };
 
-module.exports = {getMessages, saveChatMessages};
+async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath){
+    try {
+        const oldMessage = await getMessages(cookie);
+        let chats = oldMessage.length > 0 ? oldMessage : JSON.parse(JSON.stringify(defaultChats));
+
+        if (chatbot_message === "" && fileName === "" && filePath === ""){
+            return; 
+        } else if (fileName !== "" && filePath !== ""){
+            chatbot_message =  `
+                #heading1: ${chatbot_message}
+                #heading2: ${fileName}
+                **sources**: ${filePath}
+            `;
+        }
+
+        chats.push({ user: 'chatbot', message: chatbot_message });
+        await saveMessages(cookie, chats);
+
+    } catch (error) {
+        console.error('Error saving chat messages:', error);
+    }
+};
+
+module.exports = {getMessages, addNewChatBotMessages, addNewUserMessages};

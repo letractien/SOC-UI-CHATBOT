@@ -7,7 +7,15 @@ const mongodb_collection = process.env.MONGODB_COLLECTION;
 const client = new MongoClient(mongodb_uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const defaultChats = [
-    { user: 'chatbot', message: '#heading1: Xin chào! Tôi là trợ lý chatbot chuyên cung cấp thông tin về an ninh thông tin và bảo mật mạng.' },
+    { 
+        user: 'chatbot', 
+        message: '#heading1: Xin chào! Tôi là trợ lý chatbot chuyên cung cấp thông tin về an ninh thông tin và bảo mật mạng.' ,
+        filename: "", 
+        filePath: "",
+        fileId: "",
+        webContentLink: "",
+        webViewLink: "" 
+    }
 ];
 
 async function saveMessages(cookie, messages) {
@@ -44,7 +52,7 @@ async function getMessages(cookie) {
     }
 }
 
-async function addNewUserMessages(cookie, user_message, filename){
+async function addNewUserMessages(cookie, user_message, filename, filePath, fileId, webContentLink, webViewLink){
     try {
         const oldMessage = await getMessages(cookie);
         let chats = oldMessage.length > 0 ? oldMessage : JSON.parse(JSON.stringify(defaultChats));
@@ -59,7 +67,16 @@ async function addNewUserMessages(cookie, user_message, filename){
             user_message = filename;
         }
 
-        chats.push({ user: 'user', message: user_message });
+        chats.push({ 
+            user: 'user', 
+            message: user_message, 
+            filename, 
+            filePath,
+            fileId,
+            webContentLink,
+            webViewLink 
+        });
+
         await saveMessages(cookie, chats);
 
     } catch (error) {
@@ -67,7 +84,7 @@ async function addNewUserMessages(cookie, user_message, filename){
     }
 };
 
-async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath){
+async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath, fileId, webContentLink, webViewLink){
     try {
         const oldMessage = await getMessages(cookie);
         let chats = oldMessage.length > 0 ? oldMessage : JSON.parse(JSON.stringify(defaultChats));
@@ -78,11 +95,19 @@ async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath
             chatbot_message =  `
                 #heading1: ${chatbot_message}
                 #heading2: ${fileName}
-                **sources**: ${filePath}
+                **sources**: ${webContentLink}
             `;
         }
 
-        chats.push({ user: 'chatbot', message: chatbot_message });
+        chats.push({ 
+            user: 'chatbot', 
+            message: chatbot_message,
+            filename, 
+            filePath,
+            fileId,
+            webContentLink,
+            webViewLink  
+        });
         await saveMessages(cookie, chats);
 
     } catch (error) {

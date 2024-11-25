@@ -1,12 +1,13 @@
 require('dotenv').config()
 
 const fs = require('fs');
-const axios = require('axios');
 const path = require('path');
-const {saveStreamToFile} = require('../tools/processFileTool');
-const { handleStreamChunks } = require('../tools/handleStreamTool');
+const axios = require('axios');
 
-const uploadPath = process.env.UPLOAD_PATH || './uploads/';
+const {saveStreamFileToLocal} = require('../tools/processFileTool');
+const {handleStreamChunks} = require('../tools/handleStreamTool');
+const {uploadFileToDriver} = require('./uploadService');
+
 const llmsAPIAsk = process.env.LLMS_API_ASK;
 const llmsAPIUpload = process.env.LLMS_API_UPLOAD;
 
@@ -58,18 +59,45 @@ async function sendChatbotRequest(user_id, user_query) {
     }
 }
 
-async function uploadFile(user_id, fileName) {
-    const uploadFilePath = path.join(uploadPath, fileName);
+async function uploadFile(user_id, fileName, filePath, isUser=true) {
+    let fileNameOut = undefined;
+    let filePathOut = undefined;
+    let fileId = undefined;
+    let webContentLink = undefined;
+    let webViewLink = undefined;
 
     try {
-        const responseStream = await sendUploadRequest(user_id, uploadFilePath);
-        const result = await saveStreamToFile(responseStream);
-        let fileName = result.fileName ? result.fileName : "";
-        let filePath = result.filePath ? result.filePath : "";
-        return { success: true, fileName, filePath};
+        if(isUser) {
+            fileNameOut = fileName;
+            filePathOut = filePath;
+
+            const result2 = await uploadFileToDriver(fileName, filePath, isUser);
+            fileId = result2.fileId ? result2.fileId : "";
+            webContentLink = result2.webContentLink ? result2.webContentLink : "";
+            webViewLink = result2.webViewLink ? result2.webViewLink : "";
+        } else {
+            const responseStream = await sendUploadRequest(user_id, filePath);
+            const result1 = await saveStreamFileToLocal(responseStream);
+            fileNameOut = result1.fileName ? result1.fileName : "";
+            filePathOut = result1.filePath ? result1.filePath : "";
+    
+            const result2 = await uploadFileToDriver(fileNameOut, filePathOut, isUser);
+            fileId = result2.fileId ? result2.fileId : "";
+            webContentLink = result2.webContentLink ? result2.webContentLink : "";
+            webViewLink = result2.webViewLink ? result1.webViewLink : "";
+        }
+
+        return { 
+            success: true, 
+            fileNameOut,
+            filePathOut,
+            fileId,
+            webContentLink,
+            webViewLink
+        };
     } catch (error) {
         console.error('Error during file upload:', error.message);
-        return { success: false, error: error.message };
+        return { success: false };
     }
 }
 

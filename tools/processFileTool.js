@@ -4,12 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const responsePath = process.env.RESPONSE_PATH || './responses/';
 
-function saveStreamToFile(stream) {
+function saveStreamFileToLocal(stream) {
     const now = new Date();
     const formattedDate = `${now.getHours()}-${now.getMinutes()}_${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
 
     let fileName = `Information_Security_Evaluation_${formattedDate}.pdf`;
     let filePath = path.join(responsePath, fileName);
+    filePathOut = path.resolve(__dirname, `../${filePathOut}`);
 
     return new Promise((resolve, reject) => {
         const writer = fs.createWriteStream(filePath);
@@ -20,4 +21,4 @@ function saveStreamToFile(stream) {
     });
 }
 
-module.exports = {saveStreamToFile};
+module.exports = {saveStreamFileToLocal};

@@ -1,8 +1,11 @@
 require('dotenv').config();
 
+const path = require('path');
+
 const {getMessages, addNewChatBotMessages, addNewUserMessages} = require('../database/connectMongoDB');
 const { uploadFile, askChatbot } = require('../services/chatbotService');
 const { generateHTML } = require('../tools/generateHTMLTool');
+
 const cookieName = process.env.COOKIE_NAME || 'authentication';
 let temporaryData = new Map();
 
@@ -25,32 +28,73 @@ exports.getChat = async (req, res) => {
 exports.postChat = async (req, res) => {
     const cookie = req.cookies[cookieName];
     var user_message = req.body.message || "<<<<Hi>>>>";
-    var filename = req.file ? req.file.originalname : "";
-    await addNewUserMessages(cookie, user_message, filename);
-
-    let success = false;
+    var file = req.file || undefined;
     let fileNameOut = undefined;
     let filePathOut = undefined;
+    let success = false;
 
-    if (req.file) {
-        try {
-            const response = await uploadFile(cookie, filename);
-            success = response.success;
-            fileNameOut = response.fileName ? response.fileName : "";
-            filePathOut = response.filePath ? response.filePath : "";
-            if (!response.success) {
+    if (file){
+        var fileName = file.filename || "";
+        var filePath = path.resolve(__dirname, `../${file.destination}/${file.filename}`);
+
+        try{
+            const response1 = await uploadFile(cookie, fileName, filePath, true);
+            success = (success && response1.success);
+
+            if (response1.success) {
+                await addNewUserMessages(
+                    cookie, 
+                    user_message, 
+                    response1.fileNameOut, 
+                    response1.filePathOut,
+                    response1.fileId,
+                    response1.webContentLink,
+                    response1.webViewLink
+                );
+            } else {
                 return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
-            }
-            if (success){
-                await addNewChatBotMessages(cookie, 'Đây là kết quả đánh giá file SOC report của bạn', fileNameOut, filePathOut);
             }
         } catch (error) {
             return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
         }
+
+        try {
+            const response2 = await uploadFile(cookie, fileName, filePath, false);
+            success = (success && response2.success);
+
+            if (response2.success) {
+                await addNewChatBotMessages(
+                    cookie, 
+                    'Đây là kết quả đánh giá file SOC report của bạn', 
+                    response2.fileNameOut, 
+                    response2.filePathOut,
+                    response2.fileId,
+                    response2.webContentLink,
+                    response2.webViewLink
+                );
+                fileNameOut = response2.fileNameOut;
+                filePathOut = response2.webViewLink;
+
+            } else {
+                return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
+            }
+        } catch (error) {
+            return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
+        }
+    } else {
+        await addNewUserMessages(
+            cookie, 
+            user_message, 
+            "", 
+            "", 
+            "", 
+            "", 
+            ""
+        );
     }
 
     temporaryData.set(cookie, user_message);
-    res.json({ success, 'fileName': fileNameOut, 'filePath': filePathOut });
+    res.json({ success, 'fileName': fileNameOut, 'filePath': filePathOut })
 };
 
 exports.onMessage = async (req, res) => {
@@ -70,7 +114,15 @@ exports.onMessage = async (req, res) => {
                 res.write('data: [DONE]\n\n');
                 res.end();
                 
-                await addNewChatBotMessages(cookie, chatbot_message, "", "");
+                await addNewChatBotMessages(
+                    cookie, 
+                    user_message, 
+                    "", 
+                    "", 
+                    "", 
+                    "", 
+                    ""
+                );
                 return;
             }
 

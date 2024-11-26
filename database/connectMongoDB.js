@@ -52,25 +52,25 @@ async function getMessages(cookie) {
     }
 }
 
-async function addNewUserMessages(cookie, user_message, filename, filePath, fileId, webContentLink, webViewLink){
+async function addNewUserMessages(cookie, user_message, fileName, filePath, fileId, webContentLink, webViewLink){
     try {
         const oldMessage = await getMessages(cookie);
         let chats = oldMessage.length > 0 ? oldMessage : JSON.parse(JSON.stringify(defaultChats));
 
-        if (user_message === "<<<<Hi>>>>" && filename === ""){
+        if (user_message === "<<<<Hi>>>>" && fileName === ""){
             return;
-        } else if (user_message !== "<<<<Hi>>>>" && filename !== ""){
-            user_message = filename + "</br>" + user_message;
+        } else if (user_message !== "<<<<Hi>>>>" && fileName !== ""){
+            user_message = fileName + "</br>" + user_message;
         } else if (user_message !== "<<<<Hi>>>>"){
             user_message = user_message;
-        } else if (filename !== ""){
-            user_message = filename;
+        } else if (fileName !== ""){
+            user_message = fileName;
         }
 
         chats.push({ 
             user: 'user', 
             message: user_message, 
-            filename, 
+            fileName, 
             filePath,
             fileId,
             webContentLink,
@@ -95,14 +95,14 @@ async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath
             chatbot_message =  `
                 #heading1: ${chatbot_message}
                 #heading2: ${fileName}
-                **sources**: ${webContentLink}
+                **sources**: ${webViewLink}
             `;
         }
 
         chats.push({ 
             user: 'chatbot', 
             message: chatbot_message,
-            filename, 
+            fileName, 
             filePath,
             fileId,
             webContentLink,

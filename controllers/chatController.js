@@ -30,8 +30,8 @@ exports.postChat = async (req, res) => {
     var user_message = req.body.message || "<<<<Hi>>>>";
     var file = req.file || undefined;
     let fileNameOut = undefined;
-    let filePathOut = undefined;
-    let success = false;
+    let webContentLinkOut = undefined;
+    let success = true;
 
     if (file){
         var fileName = file.filename || "";
@@ -73,7 +73,7 @@ exports.postChat = async (req, res) => {
                     response2.webViewLink
                 );
                 fileNameOut = response2.fileNameOut;
-                filePathOut = response2.webViewLink;
+                webContentLinkOut = response2.webViewLink;
 
             } else {
                 return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
@@ -94,7 +94,12 @@ exports.postChat = async (req, res) => {
     }
 
     temporaryData.set(cookie, user_message);
-    res.json({ success, 'fileName': fileNameOut, 'filePath': filePathOut })
+    res.json({ 
+        success, 
+        'message': 'Đây là kết quả đánh giá file SOC report của bạn', 
+        'fileName': fileNameOut, 
+        'webContentLink': webContentLinkOut 
+    });
 };
 
 exports.onMessage = async (req, res) => {
@@ -116,7 +121,7 @@ exports.onMessage = async (req, res) => {
                 
                 await addNewChatBotMessages(
                     cookie, 
-                    user_message, 
+                    chatbot_message, 
                     "", 
                     "", 
                     "", 

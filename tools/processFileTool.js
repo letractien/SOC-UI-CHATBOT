@@ -10,7 +10,7 @@ function saveStreamFileToLocal(stream) {
 
     let fileName = `Information_Security_Evaluation_${formattedDate}.pdf`;
     let filePath = path.join(responsePath, fileName);
-    filePathOut = path.resolve(__dirname, `../${filePathOut}`);
+    filePath = path.resolve(__dirname, `../${filePath}`);
 
     return new Promise((resolve, reject) => {
         const writer = fs.createWriteStream(filePath);

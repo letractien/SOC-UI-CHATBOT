@@ -37,7 +37,6 @@ function generateHTML(content) {
 
     function traverse(node, level = 1) {
         if (node.content) {
-            // html += `<h${level}>${node.content}</h${level}>\n`;
             html += `<div class="level${level}">${node.content}</div>\n`;
         }
         for (const key in node) {

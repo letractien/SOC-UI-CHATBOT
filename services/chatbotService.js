@@ -84,7 +84,7 @@ async function uploadFile(user_id, fileName, filePath, isUser=true) {
             const result2 = await uploadFileToDriver(fileNameOut, filePathOut, isUser);
             fileId = result2.fileId ? result2.fileId : "";
             webContentLink = result2.webContentLink ? result2.webContentLink : "";
-            webViewLink = result2.webViewLink ? result1.webViewLink : "";
+            webViewLink = result2.webViewLink ? result2.webViewLink : "";
         }
 
         return { 

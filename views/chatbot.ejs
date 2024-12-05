@@ -133,10 +133,15 @@
         function generateHTML(content) {
             let data = parseInput(content);
             let html = "";
+            const dotsymbol = ['•', '◦', '‣']
 
             function traverse(node, level = 1) {
                 if (node.content) {
-                    html += `<div class="level${level}">${node.content}</div>\n`;
+                    if(level <= 1){
+                        html += `<div class="level${level}">${node.content}</div>\n`;
+                    } else {
+                        html += `<div class="level${level}">${dotsymbol[level-2]} ${node.content}</div>\n`;
+                    }
                 }
                 for (const key in node) {
                     if (key !== "content" && typeof node[key] === "object") {
@@ -315,7 +320,7 @@
 
                 // Hàm xử lý phản hồi từ server
                 function handleServerResponse(data) {
-                    if(!data.success){
+                    if(!data.success || !data.is_socreport_file){
                         return data;
                     }
                     
@@ -332,7 +337,7 @@
                                 <b>AI Chatbot</b>
                             </div>
                             <div class="message-content">
-                                <div class="level1">${data.message}</div>
+                                ${data.message}
                             </div>
                         </div>
                     `;
@@ -344,9 +349,10 @@
                 }
 
                 // Hàm xử lý cập nhật thời gian thực
-                function handleRealTimeUpdates(data) {     
-                    if (data.is_socreport_file){
+                function handleRealTimeUpdates(data) {  
+                    if (!data.success || data.is_socreport_file){
                         removeLastMessage();
+                        messagesList.scrollTop = messagesList.scrollHeight;
                         return;
                     }
 

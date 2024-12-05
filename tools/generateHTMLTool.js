@@ -34,10 +34,15 @@ function parseInput(input) {
 function generateHTML(content) {
     let data = parseInput(content);
     let html = "";
+    const dotsymbol = ['•', '◦', '‣']
 
     function traverse(node, level = 1) {
         if (node.content) {
-            html += `<div class="level${level}">${node.content}</div>\n`;
+            if(level == 1){
+                html += `<div class="level${level}">${node.content}</div>\n`;
+            } else {
+                html += `<div class="level${level}">${dotsymbol[level-2]} ${node.content}</div>\n`;
+            }
         }
         for (const key in node) {
             if (key !== "content" && typeof node[key] === "object") {

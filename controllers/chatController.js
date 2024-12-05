@@ -29,7 +29,7 @@ exports.postChat = async (req, res) => {
     const cookie = req.cookies[cookieName];
     var user_message = req.body.message || "<<<<Hi>>>>";
     var file = req.file || undefined;
-    let success = false;
+    let success = true;
     let is_socreport_file = false;
     let chatbot_message = "";
 
@@ -39,7 +39,7 @@ exports.postChat = async (req, res) => {
 
         try{
             const response1 = await uploadFile(cookie, "", fileName, filePath, true);
-            success = (success || response1.success);
+            success = (success && response1.success);
 
             if (response1.success) {
                 await addNewUserMessages(
@@ -98,7 +98,7 @@ exports.postChat = async (req, res) => {
     res.json({ 
         success, 
         is_socreport_file,
-        'message': chatbot_message
+        'message': generateHTML(chatbot_message)
     });
 };
 
@@ -113,7 +113,6 @@ exports.onMessage = async (req, res) => {
     res.flushHeaders(); 
 
     try {
-
         await askChatbot(cookie, user_message, async (chunk) => {
             if (chunk === null) {
                 res.write('data: [DONE]\n\n');
@@ -137,8 +136,21 @@ exports.onMessage = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.write('data: {"message": "An error occurred"}\n\n');
+        chatbot_message = `#heading1: Đã xảy ra lỗi: Thời gian chờ quá lâu!`;
+        res.write(`data: ${JSON.stringify({ user: 'chatbot', message: chatbot_message })}\n\n`);
+        res.write('data: [DONE]\n\n');
         res.end();
+
+        await addNewChatBotMessages(
+            cookie, 
+            chatbot_message, 
+            "", 
+            "", 
+            "", 
+            "", 
+            ""
+        );
+        return;
     }
 };
 

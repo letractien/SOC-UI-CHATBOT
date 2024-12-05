@@ -316,7 +316,7 @@
                 // Hàm xử lý phản hồi từ server
                 function handleServerResponse(data) {
                     if(!data.success){
-                        return;
+                        return data;
                     }
                     
                     removeLastMessage();
@@ -333,18 +333,23 @@
                             </div>
                             <div class="message-content">
                                 <div class="level1">${data.message}</div>
-                                <div class="level1">${data.fileName}</div>
-                                <a href="${data.webContentLink}" target="_blank">Tham khảo: ${data.webContentLink}</a>;
                             </div>
                         </div>
                     `;
                     messagesList.appendChild(resultMessage);
 
                     addLoaderMessage();
+
+                    return data;
                 }
 
                 // Hàm xử lý cập nhật thời gian thực
-                function handleRealTimeUpdates() {                    
+                function handleRealTimeUpdates(data) {     
+                    if (data.is_socreport_file){
+                        removeLastMessage();
+                        return;
+                    }
+
                     let chatbotMessage = "";
                     const eventSource = new EventSource("/onMessage");
 
@@ -352,7 +357,6 @@
                         if (event.data === '[DONE]') {
                             eventSource.close();
                             sendButton.disabled = false;
-                            console.log(chatbotMessage);
                         } else {
                             const chunk = JSON.parse(event.data);
                             chatbotMessage += chunk.message;

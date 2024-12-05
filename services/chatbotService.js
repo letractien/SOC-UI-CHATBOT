@@ -11,7 +11,7 @@ const {uploadFileToDriver} = require('./uploadService');
 const llmsAPIAsk = process.env.LLMS_API_ASK;
 const llmsAPIUpload = process.env.LLMS_API_UPLOAD;
 
-async function sendUploadRequest(user_id, filePath) {
+async function sendUploadRequest(user_id, user_query, filePath) {
     const fileStream = fs.createReadStream(filePath);
 
     try {
@@ -20,13 +20,13 @@ async function sendUploadRequest(user_id, filePath) {
             url: llmsAPIUpload,
             data: {
                 user_id: user_id,
+                user_query: user_query,
                 file: fileStream,
             },
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-            responseType: 'stream',
-            timeout: 180000,
+            timeout: 300000,
         });
 
         return response;
@@ -49,7 +49,7 @@ async function sendChatbotRequest(user_id, user_query) {
                 'Content-Type': 'multipart/form-data',
             },
             responseType: 'stream',
-            timeout: 180000,
+            timeout: 300000,
         });
 
         return response;
@@ -59,32 +59,29 @@ async function sendChatbotRequest(user_id, user_query) {
     }
 }
 
-async function uploadFile(user_id, fileName, filePath, isUser=true) {
+async function uploadFile(user_id, user_message, fileName, filePath, isUser=true) {
     let fileNameOut = undefined;
     let filePathOut = undefined;
     let fileId = undefined;
     let webContentLink = undefined;
     let webViewLink = undefined;
+    let isSocReportFile = false;
+    let chatbotMessage = "";
 
     try {
         if(isUser) {
             fileNameOut = fileName;
             filePathOut = filePath;
 
-            const result2 = await uploadFileToDriver(fileName, filePath, isUser);
-            fileId = result2.fileId ? result2.fileId : "";
-            webContentLink = result2.webContentLink ? result2.webContentLink : "";
-            webViewLink = result2.webViewLink ? result2.webViewLink : "";
+            const result = await uploadFileToDriver(fileName, filePath, isUser);
+            fileId = result.fileId ? result.fileId : "";
+            webContentLink = result.webContentLink ? result.webContentLink : "";
+            webViewLink = result.webViewLink ? result.webViewLink : "";
+
         } else {
-            const responseStream = await sendUploadRequest(user_id, filePath);
-            const result1 = await saveStreamFileToLocal(responseStream);
-            fileNameOut = result1.fileName ? result1.fileName : "";
-            filePathOut = result1.filePath ? result1.filePath : "";
-    
-            const result2 = await uploadFileToDriver(fileNameOut, filePathOut, isUser);
-            fileId = result2.fileId ? result2.fileId : "";
-            webContentLink = result2.webContentLink ? result2.webContentLink : "";
-            webViewLink = result2.webViewLink ? result2.webViewLink : "";
+            const response = await sendUploadRequest(user_id, user_message, filePath);
+            isSocReportFile = response.data.is_socreport_file ? response.data.is_socreport_file : false;
+            chatbotMessage = response.data.response ? response.data.response : "";
         }
 
         return { 
@@ -93,7 +90,9 @@ async function uploadFile(user_id, fileName, filePath, isUser=true) {
             filePathOut,
             fileId,
             webContentLink,
-            webViewLink
+            webViewLink,
+            isSocReportFile,
+            chatbotMessage
         };
     } catch (error) {
         console.error('Error during file upload:', error.message);

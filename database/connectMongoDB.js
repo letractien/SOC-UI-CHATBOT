@@ -94,8 +94,6 @@ async function addNewChatBotMessages(cookie, chatbot_message, fileName, filePath
         } else if (fileName !== "" && filePath !== ""){
             chatbot_message =  `
                 #heading1: ${chatbot_message}
-                #heading2: ${fileName}
-                **sources**: ${webViewLink}
             `;
         }
 

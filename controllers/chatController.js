@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const path = require('path');
 
-const {getMessages, addNewChatBotMessages, addNewUserMessages} = require('../database/connectMongoDB');
+const { getMessages, addNewChatBotMessages, addNewUserMessages } = require('../database/connectMongoDB');
 const { uploadFile, askChatbot } = require('../services/chatbotService');
 const { generateHTML } = require('../tools/generateHTMLTool');
 
@@ -29,17 +29,17 @@ exports.postChat = async (req, res) => {
     const cookie = req.cookies[cookieName];
     var user_message = req.body.message || "<<<<Hi>>>>";
     var file = req.file || undefined;
-    let fileNameOut = undefined;
-    let webContentLinkOut = undefined;
-    let success = true;
+    let success = false;
+    let is_socreport_file = false;
+    let chatbot_message = "";
 
     if (file){
         var fileName = file.filename || "";
         var filePath = path.resolve(__dirname, `../${file.destination}/${file.filename}`);
 
         try{
-            const response1 = await uploadFile(cookie, fileName, filePath, true);
-            success = (success && response1.success);
+            const response1 = await uploadFile(cookie, "", fileName, filePath, true);
+            success = (success || response1.success);
 
             if (response1.success) {
                 await addNewUserMessages(
@@ -59,21 +59,21 @@ exports.postChat = async (req, res) => {
         }
 
         try {
-            const response2 = await uploadFile(cookie, fileName, filePath, false);
+            const response2 = await uploadFile(cookie, user_message, fileName, filePath, false);
             success = (success && response2.success);
+            is_socreport_file = response2.isSocReportFile;
+            chatbot_message = response2.chatbotMessage;
 
             if (response2.success) {
                 await addNewChatBotMessages(
                     cookie, 
-                    'Đây là kết quả đánh giá file SOC report của bạn', 
-                    response2.fileNameOut, 
-                    response2.filePathOut,
-                    response2.fileId,
-                    response2.webContentLink,
-                    response2.webViewLink
+                    chatbot_message, 
+                    "", 
+                    "",
+                    "",
+                    "",
+                    ""
                 );
-                fileNameOut = response2.fileNameOut;
-                webContentLinkOut = response2.webViewLink;
 
             } else {
                 return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
@@ -81,6 +81,7 @@ exports.postChat = async (req, res) => {
         } catch (error) {
             return res.status(500).send('Lỗi khi xử lý yêu cầu tải lên.');
         }
+
     } else {
         await addNewUserMessages(
             cookie, 
@@ -96,9 +97,8 @@ exports.postChat = async (req, res) => {
     temporaryData.set(cookie, user_message);
     res.json({ 
         success, 
-        'message': 'Đây là kết quả đánh giá file SOC report của bạn', 
-        'fileName': fileNameOut, 
-        'webContentLink': webContentLinkOut 
+        is_socreport_file,
+        'message': chatbot_message
     });
 };
 

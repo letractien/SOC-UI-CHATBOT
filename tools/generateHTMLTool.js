@@ -70,6 +70,10 @@ function generateHTML(content) {
             traverse(data[key]);
         }
     }
+    
+    if (html.trim() === ""){
+        return `<div class="level1">${content}</div>\n`
+    }
 
     return html;
 }

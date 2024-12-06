@@ -83,6 +83,7 @@ exports.postChat = async (req, res) => {
         }
 
     } else {
+        is_socreport_file = undefined;
         await addNewUserMessages(
             cookie, 
             user_message, 

@@ -27,6 +27,6 @@ app.use(express.static('static'));
 app.use('/', chatRoutes);
 app.use('/', authRoutes);
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 3333, () => {
     console.log(`Server is running at http://localhost:${process.env.PORT}`);
 });

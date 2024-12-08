@@ -137,7 +137,7 @@ exports.onMessage = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        chatbot_message = `#heading1: Đã xảy ra lỗi: Thời gian chờ quá lâu!`;
+        chatbot_message = `#heading1: Thời gian chờ quá lâu!`;
         res.write(`data: ${JSON.stringify({ user: 'chatbot', message: chatbot_message })}\n\n`);
         res.write('data: [DONE]\n\n');
         res.end();

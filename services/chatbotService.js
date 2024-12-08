@@ -4,92 +4,58 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
-const {saveStreamFileToLocal} = require('../tools/processFileTool');
 const {handleStreamChunks} = require('../tools/handleStreamTool');
 const {uploadFileToDriver} = require('./uploadService');
 
 const llmsAPIAsk = process.env.LLMS_API_ASK;
 const llmsAPIUpload = process.env.LLMS_API_UPLOAD;
 
-async function sendUploadRequest(user_id, user_query, filePath, retries = 3, retryDelay = 5000) {
+async function sendUploadRequest(user_id, user_query, filePath) {
     const fileStream = fs.createReadStream(filePath);
-    let attempts = 0;
 
-    while (attempts < retries) {
-        try {
-            const response = await axios({
-                method: 'post',
-                url: llmsAPIUpload,
-                data: {
-                    user_id: user_id,
-                    user_query: user_query,
-                    file: fileStream,
-                },
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-                timeout: 300000, // 5 phút
-            });
+    try {
+        const response = await axios({
+            method: 'post',
+            url: llmsAPIUpload,
+            data: {
+                user_id: user_id,
+                user_query: user_query,
+                file: fileStream,
+            },
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 300000,
+        });
 
-            return response; // Thành công, trả về response
-        } catch (error) {
-            attempts++;
-
-            if (error.response?.status === 524) {
-                console.warn(`Attempt ${attempts} failed due to 524 timeout. Retrying...`);
-            } else {
-                console.error('Error during API request:', error.message);
-                throw new Error('API request failed');
-            }
-
-            if (attempts < retries) {
-                // Chờ một khoảng thời gian trước khi retry
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
-            }
-        }
+        return response;
+    } catch (error) {
+        console.error('Error during API request:', error);
+        throw new Error('API request failed');
     }
-
-    throw new Error('Max retries reached. API request failed');
 }
 
-async function sendChatbotRequest(user_id, user_query, retries = 3, retryDelay = 5000) {
-    let attempts = 0;
+async function sendChatbotRequest(user_id, user_query) {
+    try {
+        const response = await axios({
+            method: 'post',
+            url: llmsAPIAsk,
+            data: {
+                user_id: user_id,
+                user_query: user_query,
+            },
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            responseType: 'stream',
+            timeout: 300000,
+        });
 
-    while (attempts < retries) {
-        try {
-            const response = await axios({
-                method: 'post',
-                url: llmsAPIAsk,
-                data: {
-                    user_id: user_id,
-                    user_query: user_query,
-                },
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-                responseType: 'stream',
-                timeout: 300000, // 5 phút
-            });
-
-            return response; // Trả về dữ liệu nếu thành công
-        } catch (error) {
-            attempts++;
-
-            if (error.response?.status === 524) {
-                console.warn(`Attempt ${attempts} failed due to 524 timeout. Retrying...`);
-            } else {
-                console.error('Error during chatbot request:', error.message);
-                throw new Error('Chatbot request failed');
-            }
-
-            if (attempts < retries) {
-                // Chờ một thời gian trước khi retry
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
-            }
-        }
+        return response;
+    } catch (error) {
+        console.error('Error during chatbot request:', error.message);
+        throw new Error('Chatbot request failed');
     }
-
-    throw new Error('Max retries reached. Chatbot request failed');
 }
 
 async function uploadFile(user_id, user_message, fileName, filePath, isUser=true) {

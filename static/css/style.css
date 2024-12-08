@@ -199,3 +199,10 @@ body {
     margin-bottom: 5px;
     padding-left: 150px;
 }
+
+.level5 {
+    font-size: 1.2rem;
+    font-weight: italic;
+    margin-bottom: 5px;
+    padding-left: 190px;
+}
